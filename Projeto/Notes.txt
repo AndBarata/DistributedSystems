@@ -1,0 +1,11 @@
+Available Clocks on Mac (https://stackoverflow.com/questions/11680461/monotonic-clock-on-osx)
+ # SYSTEM_CLOCK
+ # CALENDAR_CLOCK
+ # REALTIME_CLOCK 
+
+Criar thread para atualizar o relógio
+
+Atualizar o relogio a cada ciclo
+ # Os tick nem sempre são os mesmos;
+
+
