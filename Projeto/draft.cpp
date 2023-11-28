@@ -96,14 +96,15 @@ class NTPClock {
 
 int main(){
     NTPClock clk = NTPClock();
-
     int last_clk = clock();
-    for (int i=0; i<12; i++){
+    sync_rate = 10;
+
+    for (int i=0; i<100; i++){
         //clk.upDateTimestamp();
+        if last_clk - clk.current_timestamp >= sync_:
         clk.incrementTimestamp();
         printf(" [%d] Clock: %d\n", i, clk.getCurrentTimestamp()-last_clk);
         last_clk = clk.getCurrentTimestamp();
-        usleep(100);
+        
     }
-    
 }
