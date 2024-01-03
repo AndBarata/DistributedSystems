@@ -3,69 +3,99 @@ import struct
 import time
 from datetime import datetime, timedelta
 import threading
+import ntplib
+import sys
 
 counter = 0 # DEBUG
 
-class NTPclient():
-    def __init__(self, update_rate):
-        # Connection parameters
-        self.host = "pool.ntp.org" # case of NTP online server
-        #self.host = "10.42.0.1" # case of rasp
-        self.port = 123
-        self.read_buffer = 1024
-        self.address = (self.host, self.port)
-        self.epoch = 2208988800
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
+
+class NTPclient():
+    def __init__(self, update_rate, slave_clock):
+        self.slave_clock = slave_clock
+        self.client = ntplib.NTPClient()
+        self.server = '0.pool.ntp.org'
         # Fetch parameters
         self.update_rate = update_rate # seconds
         self.fetch_time = threading.Event()
+        self.lastResponse = 0
 
     def start(self):
         while not self.fetch_time.wait(self.update_rate):
             global counter # DEBUG
             counter = 0 # DEBUG
-            t = self.getServerTime()
-            print("\nNTPserver time: ", t)
+            self.slave_clock.sentRequestTime = self.slave_clock.timestamp
+            resp = self.getServerTime()
+            self.slave_clock.calculateOffset(resp)
+
 
     def getServerTime(self):
-        data = b'\x1b' + 47 * b'\0'
-        self.client.sendto(data, self.address)
+        try:
+            resp = self.client.request(self.server, version=3)
+            self.lastResponse = resp
+        except:
+            resp = self.lastResponse
+        return resp
+        
 
-        data, self.address = self.client.recvfrom(self.read_buffer)
-
-        t_int, t_frac = struct.unpack("!12I", data)[10:12]
-        t_int -= self.epoch
-
-        # Convert the fractional part to microseconds (1 second = 2**32 fractional units)
-        t_frac = t_frac * 1e6 // 2**32
-
-        # Format the NTP time as a string
-        ntp_time = "%s.%06d" % (time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(t_int)), t_frac)
-
-        return ntp_time
 
 
 class AbstractClock():
     # Is a clock that runs over the OS clock. It's updated according the the OS monotonic clock
-    def __init__(self, update_rate):
-        self.timestamp = 0
+    def __init__(self, update_rate, drift):
+        self.timestamp = datetime.now()
         self.update_rate = update_rate # seconds
+        self.drift = drift # seconds
+        self.offset = timedelta(seconds=0)
+        self.sentRequestTime = 0
+        self.lastUpdate = 0
         self.update_timer = threading.Event()
+    
 
     def start(self):
         self.start_time = time.monotonic()
         self.start_datetime = datetime.now()
+        self.timestamp = datetime.now()
         while not self.update_timer.wait(self.update_rate):
             global counter # DEBUG
             counter += 1 # DEBUG
             self.updateTimestamp()
-            print(f"[{counter}] Slave timestamp: {self.timestamp}")
+            print(f"[{counter}] Slave timestamp: {self.correctedTimestamp} | Offset: {self.offset}")
+
+
+
+    def ntp_to_datetime(self, ntp_timestamp):
+        ntp_epoch = datetime(1900, 1, 1)
+        unix_epoch = datetime(1900, 1, 1)
+        ntp_delta = (unix_epoch - ntp_epoch).total_seconds()
+
+        timestamp = ntp_timestamp - ntp_delta
+        return datetime.utcfromtimestamp(timestamp)    
+
+
+    def calculateOffset(self, resp):
+
+        # Calculate the offset between the slave and the master
+        t3 = self.timestamp
+        t2 = self.ntp_to_datetime(resp.tx_time)
+        t1 = self.ntp_to_datetime(resp.recv_time)
+        t0 = self.sentRequestTime
+        
+        print(f"\nNTP request: t3: {t3} | t2: {t2} | t1: {t1} | t0: {t0}") 
+        self.offset = ( (t1-t0) + (t2-t3) ) / 2
+
 
     def updateTimestamp(self):
-        self.timestamp = timedelta(seconds=(time.monotonic() - self.start_time))+ self.start_datetime
+        # Update the timestamp according to the monotonic clock and the calculated offset
+        #self.timestamp = timedelta(seconds=(time.monotonic() - self.start_time)) + self.start_datetime + timedelta(self.offset)
         
-        
+        self.timestamp = self.timestamp + timedelta(seconds=self.update_rate) + timedelta(seconds=self.drift)
+        self.correctedTimestamp = self.timestamp + self.offset
+
+
+
+
+
 def monotomicSleep(seconds):
     # Sleep function that uses the monotonic clock
     start_time = time.monotonic()
@@ -75,20 +105,32 @@ def monotomicSleep(seconds):
         if elapsed_time >= seconds:
             break
 
+
+# Define update rates
+ABSTRACT_CLOCK_UPDATE_RATE = 0.0001 # seconds 
+NTP_UPDATE_RATE = 10 * ABSTRACT_CLOCK_UPDATE_RATE # seconds -> This can't be to low so that we have time to fetch the NTP time
+
+# Adds a drift to the clock if specified, to see the results of the correction
+if len(sys.argv) > 1:
+    drift = float(sys.argv[1])
+else:
+    drift = 0 
+
+# Creates instances for clock and NTP client
+slave_clock = AbstractClock(ABSTRACT_CLOCK_UPDATE_RATE, drift)
+ntp_client = NTPclient(NTP_UPDATE_RATE, slave_clock)
+
 if __name__ == "__main__":
-
-    # Define update rates
-    ABSTRACT_CLOCK_UPDATE_RATE = 0.1 # seconds
-    NTP_UPDATE_RATE = 10 * ABSTRACT_CLOCK_UPDATE_RATE # seconds
-
-    # Creates instances for clock and NTP client
-    slave_clock = AbstractClock(ABSTRACT_CLOCK_UPDATE_RATE)
-    ntp_client = NTPclient(NTP_UPDATE_RATE)
 
     # Start threads
     threading.Thread(target=slave_clock.start).start()
     monotomicSleep(ABSTRACT_CLOCK_UPDATE_RATE/5) # Sleep avoid overlapping between the two threads
     threading.Thread(target=ntp_client.start).start()
+
+
+
+
+
 
 
 
