@@ -90,6 +90,7 @@ class AbstractClock():
         #self.timestamp = timedelta(seconds=(time.monotonic() - self.start_time)) + self.start_datetime + timedelta(self.offset)
         
         self.timestamp = self.timestamp + timedelta(seconds=self.update_rate) + timedelta(seconds=self.drift)
+        print("DEBUG: ", self.timestamp, "offset: ", self.offset)
         self.correctedTimestamp = self.timestamp + self.offset
 
 
