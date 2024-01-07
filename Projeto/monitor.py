@@ -3,7 +3,7 @@ import time
 import threading
 
 class Server:
-    def __init__(self, host='127.0.0.1', port=12345):
+    def __init__(self, host='0.0.0.0', port=12345):
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -14,8 +14,8 @@ class Server:
         while True:
             data = client_socket.recv(1024)
             if data:
-                #print(f"INFO : {data.decode('utf-8')}   \t@ {time.monotonic()}")
-                print(time.monotonic())
+                print(f"INFO : {data.decode('utf-8')}   \t@ {time.monotonic()}")
+                #print(time.monotonic())
             else:
                 break
         client_socket.close()
@@ -24,7 +24,7 @@ class Server:
         print("Monitor started, waiting for connections...")
         while True:
             client_socket, addr = self.sock.accept()
-            print(f"Connection established with {addr}")
+            print(f"Connection established with {addr} at date {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}")
             threading.Thread(target=self.handle_client, args=(client_socket,)).start()
 
 # Usage

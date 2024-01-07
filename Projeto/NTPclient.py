@@ -44,33 +44,46 @@ class NTPclient():
 
         data = b'\x1b' + 47 * b'\0'
         orig_time = time.monotonic()
+        
         self.client.sendto(data, self.address)
-        data, self.address = self.client.recvfrom(self.read_buffer)
-        orig_int, orig_frac, ref_int, ref_frac, rx_int, rx_frac, tx_int, tx_frac = struct.unpack("!12I", data)[4:12]
-
-
-        rx_int -= self.epoch
-        tx_int -= self.epoch
-
-        # Convert the fractional part to microseconds (1 second = 2**32 fractional units)
-        ref_frac = ref_frac * 1e6 // 2**32
-        rx_frac = rx_frac * 1e6 // 2**32
-        tx_frac = tx_frac * 1e6 // 2**32
+        self.client.settimeout(5)  # set a timeout of 5 seconds
         
+        try:
+            
+            data, self.address = self.client.recvfrom(self.read_buffer)
+           
+
+            orig_int, orig_frac, ref_int, ref_frac, rx_int, rx_frac, tx_int, tx_frac = struct.unpack("!12I", data)[4:12]
+
+
+            rx_int -= self.epoch
+            tx_int -= self.epoch
+
+            # Convert the fractional part to microseconds (1 second = 2**32 fractional units)
+            ref_frac = ref_frac * 1e6 // 2**32
+            rx_frac = rx_frac * 1e6 // 2**32
+            tx_frac = tx_frac * 1e6 // 2**32
+            
+            
+            t_timedelta = timedelta(microseconds=ref_frac)
+            ref_time = datetime.fromtimestamp(ref_int) + t_timedelta
+
+            t_timedelta = timedelta(microseconds=rx_frac)
+            rx_time = datetime.fromtimestamp(rx_int) + t_timedelta
+
+            t_timedelta = timedelta(microseconds=tx_frac)
+            tx_time = datetime.fromtimestamp(tx_int) + t_timedelta
+
+            orig_time = self.monotonicToDatetime(orig_time, self.start_monotonic)
+            dest_time = self.monotonicToDatetime(time.monotonic(), self.start_monotonic)
+
+            return ref_time, orig_time, rx_time, tx_time, dest_time 
         
-        t_timedelta = timedelta(microseconds=ref_frac)
-        ref_time = datetime.fromtimestamp(ref_int) + t_timedelta
 
-        t_timedelta = timedelta(microseconds=rx_frac)
-        rx_time = datetime.fromtimestamp(rx_int) + t_timedelta
-
-        t_timedelta = timedelta(microseconds=tx_frac)
-        tx_time = datetime.fromtimestamp(tx_int) + t_timedelta
-
-        orig_time = self.monotonicToDatetime(orig_time, self.start_monotonic)
-        dest_time = self.monotonicToDatetime(time.monotonic(), self.start_monotonic)
-
-        return ref_time, orig_time, rx_time, tx_time, dest_time 
+        except (socket.error, socket.timeout):
+            # If a socket error occurs, print an error message and try again
+            return 0
+        
         
 
 
@@ -104,25 +117,32 @@ class AbstractClock():
 
     def correctClock(self):
         ntp_time = self.ntp_client.getServerTime()
-        t0 = ntp_time[1]
-        t1 = ntp_time[2]
-        t2 = ntp_time[3]
-        t3 = ntp_time[4]
-        # Update the rate parameters
-        self.last_ntp_timestamp = self.ntp_timestamp
-        self.ntp_timestamp = t1
-        self.last_timestamp = self.timestamp
-        self.timestamp = time.monotonic()
+        if ntp_time:
+            t0 = ntp_time[1]
+            t1 = ntp_time[2]
+            t2 = ntp_time[3]
+            t3 = ntp_time[4]
+            # Update the rate parameters
+            self.last_ntp_timestamp = self.ntp_timestamp
+            self.ntp_timestamp = t1
+            self.last_timestamp = self.timestamp
+            self.timestamp = time.monotonic()
 
-        self.updateOffset(t0, t1, t2, t3)
-        self.updateRate(t0, t1, t2, t3)
-        self.updateDelay(t0, t1, t2, t3)
+            self.updateOffset(t0, t1, t2, t3)
+            self.updateRate(t0, t1, t2, t3)
+            self.updateDelay(t0, t1, t2, t3)
+        
+        else:
+            print("Error connecting to NTP server. Retrying...")
 
         #print("\n_NTP update_\n") # DEBUG
-        global offsets # For results
-        offsets.append(self.offset) # For results
         
-        print(f"{self.offset.total_seconds():.5f}")
+        
+        
+        print(f"offset:{self.offset.total_seconds():.5f}")
+        print(f"rate:{self.rate}")
+        print(f"delay:{self.delay}")
+        print("\n")
     
     def periodicClockUpdate(self):
         while True:
@@ -149,7 +169,7 @@ class AbstractClock():
 
 
 class Monitor():
-    def __init__(self, host='127.0.0.1', port=12345):
+    def __init__(self, host='172.20.10.4', port=12345):
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -189,12 +209,12 @@ if __name__ == "__main__":
         abs_time = clock_A.getCorrectedTime()
         state = ((int(clock_A.getCorrectedTime().strftime('%S')) // 10) % 2 == 0) ^ int(side)
         if state and not prev_state:
-            #print("\Green:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
+            print("\Green:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
             monitor.send_data(f"{side} | Green") 
                     
         #state = (int(clock_A.getCorrectedTime().strftime('%S')) // 10) % 2 == 1 and side
         if not state and prev_state:           
-            #print("\Red:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
+            print("\Red:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
             monitor.send_data(f"{side} | Red") 
 
         prev_state = state
