@@ -14,7 +14,8 @@ class Server:
         while True:
             data = client_socket.recv(1024)
             if data:
-                print(f"INFO : {data.decode('utf-8')}   \t@ {time.monotonic()}")
+                #print(f"INFO : {data.decode('utf-8')}   \t@ {time.monotonic()}")
+                print(time.monotonic())
             else:
                 break
         client_socket.close()

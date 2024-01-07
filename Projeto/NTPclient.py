@@ -5,14 +5,13 @@ from datetime import datetime, timedelta
 import threading
 import sys
 
-counter = 0 # DEBUG
-
+offsets = [] # For results
 
 
 class NTPclient():
     def __init__(self, start_monotonic, start_datetime):
         # Connection parameters
-        self.host = '0.pool.ntp.org' # case of NTP online server
+        self.host = 'pool.ntp.org' # case of NTP online server
         self.port = 123
         self.read_buffer = 1024
         self.address = (self.host, self.port)
@@ -119,7 +118,11 @@ class AbstractClock():
         self.updateRate(t0, t1, t2, t3)
         self.updateDelay(t0, t1, t2, t3)
 
-        print("\nNTP update") # DEBUG
+        #print("\n_NTP update_\n") # DEBUG
+        global offsets # For results
+        offsets.append(self.offset) # For results
+        
+        print(f"{self.offset.total_seconds():.5f}")
     
     def periodicClockUpdate(self):
         while True:
@@ -141,8 +144,7 @@ class AbstractClock():
     def getCorrectedTime(self):
         now = time.monotonic()
         elapsed_time = now - self.timestamp
-        
-        corrected_time = self.timestamp + elapsed_time*self.rate*self.drift + self.offset.total_seconds()
+        corrected_time = self.timestamp + elapsed_time*self.rate + self.offset.total_seconds()
         return self.ntp_client.monotonicToDatetime(corrected_time, self.start_monotonic)
 
 
@@ -158,6 +160,9 @@ class Monitor():
 
     def close_connection(self):
         self.sock.close()
+
+
+
 
 
 
@@ -181,15 +186,15 @@ if __name__ == "__main__":
     prev_state = 0
 
     while True:
+        abs_time = clock_A.getCorrectedTime()
         state = ((int(clock_A.getCorrectedTime().strftime('%S')) // 10) % 2 == 0) ^ int(side)
-        #print(f"DEBUG cond: {((int(clock_A.getCorrectedTime().strftime('%S')) // 10) % 2 == 0)} | side: {bool(side)} | xor: {state}")
-        if state and not prev_state:      
-            print("\Green:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
+        if state and not prev_state:
+            #print("\Green:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
             monitor.send_data(f"{side} | Green") 
                     
         #state = (int(clock_A.getCorrectedTime().strftime('%S')) // 10) % 2 == 1 and side
         if not state and prev_state:           
-            print("\Red:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
+            #print("\Red:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
             monitor.send_data(f"{side} | Red") 
 
         prev_state = state
