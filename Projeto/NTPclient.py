@@ -193,7 +193,7 @@ class AbstractClock():
 
 
 class Monitor():
-    def __init__(self, host='172.20.10.4', port=12345):
+    def __init__(self, host='10.227.156.232', port=12345):
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
