@@ -1,25 +1,45 @@
-# import csv
-
 import pandas as pd
-
-print("Results of NTP clock synchronization for semaphores\n")
-
-# import data
-slots = pd.read_csv('log_slots_5-01.csv')
-
-# Get difference between RED and GREEN slots
-errors = slots.iloc[:, 0].diff()
-errors = errors[errors < 3].dropna()
-print("Slots errors (RED - GREEN) - Diffrence between a semopher turn red and other green")
-print(f"\tMean error: {errors.mean():.5f} | Max error: {errors.abs().max():.5f} | Min error: {errors.abs().min():.5f} | Jitter: {errors.abs().max()-errors.abs().min():.5f}\n")
+import matplotlib.pyplot as plt
 
 
-offsets = pd.read_csv('log_offset_5-01.csv', decimal='.', sep=';')
+def resultSlots(df):
+    df_list = df.slots.tolist()
 
-# Offset clock A
-offsets_A = offsets.iloc[:, 0]
-offsets_B = offsets.iloc[:, 1]
-print("Offset - Difference between the NTP server time and the local clock time")
-print(f"\tClock_A : Mean offset: {offsets_A.abs().mean():.5f} | Max offset: {offsets_A.abs().max():.5f} | Min offset: {offsets_A.abs().min():.5f} | Jitter: {offsets_A.abs().max()-offsets_A.abs().min():.5f}")
-print(f"\tClock_B : Mean offset: {offsets_B.abs().mean():.5f} | Max offset: {offsets_B.abs().max():.5f} | Min offset: {offsets_B.abs().min():.5f} | Jitter: {offsets_B.abs().max()-offsets_B.abs().min():.5f}\n")
+    # difference between slots minor than 7
+    df_list_diff = [df_list[i+1] - df_list[i] for i in range(len(df_list)-1) if df_list[i+1] - df_list[i] < 5]
+   
+    print(f"\t - Total slots:  {len(df_list)}")
+    print(f"\t - Min:          {min(df_list_diff)}")
+    print(f"\t - Max:          {max(df_list_diff)}")
+    print(f"\t - Jitter:       {max(df_list_diff) - min(df_list_diff)}")
+    print(f"\t - Mean:         {sum(df_list_diff)/len(df_list_diff)}")
 
+    # Plot slots's difference
+    plt.figure
+    plt.plot(df_list_diff)
+    plt.ylabel("Slots difference (s)")
+    plt.xlabel("time (s)")
+    plt.title("Slots difference")
+    plt.show()
+
+    
+    
+
+if __name__ == "__main__":
+    slots_no_correction = "log_slots_7-01_No_offset_rate" + ".csv"
+    slots_no_offset = "log_slots_7-01_No_offset" + ".csv"
+    slots_corrected = "log_slots_7-01_V2" + ".csv"
+
+    df_slots_no_correction = pd.read_csv(slots_no_correction)
+    df_slots_no_offset = pd.read_csv(slots_no_offset)
+    df_slots_corrected = pd.read_csv(slots_corrected)
+
+    print("\n\nResults for slots with no correction:")
+    resultSlots(df_slots_no_correction)
+    
+    print("\n\nResults for slots with no offset:")
+    resultSlots(df_slots_no_offset)
+
+    print("\n\nResults for slots with correction:")
+    resultSlots(df_slots_corrected)
+    
