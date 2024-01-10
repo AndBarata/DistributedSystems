@@ -1,25 +1,26 @@
-import re
 import pandas as pd
 
 # Open the text file and read its contents
-with open('log_clockB_7-01_V2.txt', 'r') as file:
+file_name = 'log_slots_7-01_No_offset_rate'
+with open(file_name + ".txt", 'r') as file:
     lines = file.readlines()
 
 offsets = []
 rates = []
 delays = []
 
-for line in lines:
-    # Use regular expressions to find 'offset', 'rate', and 'delay' in the line
-    offset = re.search(r'offset:([-+]?[0-9]*\.?[0-9]+)', line)
-    rate = re.search(r'rate:([-+]?[0-9]*\.?[0-9]+)', line)
-    delay = re.search(r'delay:0:00:00.([0-9]+)', line)
+for i, line in enumerate(lines):
+    if line.find('offset') != -1:
+        offsets.append(float(line.split(':')[1]))
+        
+    elif line.find('rate') != -1:
+        rates.append(float(line.split(':')[1]))
+    
+    elif line.find('delay') != -1:
+        delays.append(float(line.split(':')[-1]))
 
-    # If a match is found, append the matched value to the corresponding list
-    # If no match is found, append None
-    offsets.append(offset.group(1) if offset else None)
-    rates.append(rate.group(1) if rate else None)
-    delays.append(delay.group(1) if delay else None)
+
+    #print(f'\nLine {i}: {line}\n{offsets}, {rates}, {delays}')
 
 # Convert the matches to a DataFrame
 data = pd.DataFrame({
@@ -29,4 +30,7 @@ data = pd.DataFrame({
 })
 
 # Save the DataFrame to a CSV file
-data.to_csv('log_clockB_7-01_V2.csv', index=False)
+data.to_csv(file_name + '.csv', index=False)
+
+df = pd.read_csv(file_name + '.csv')
+print(df.tail())

@@ -1,36 +1,46 @@
 import socket
 import threading
+import sys
+
+class Server():
+    def __init__(self, port, average):
+        self.average = float(average)
+
+        self.host = "localhost"
+        self.port = int(port)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # SOCK_STREAM for TCP
+        self.sock.bind((self.host, self.port))
+        self.sock.listen()
+
+    def send(self, data, conn):
+        conn.sendall(data.encode("utf-8"))
 
 
-class Server:
-    def __init__(self):
-        self.host = 'localhost'
-        self.port = 8080
-        self.soc = socket.socket()
-        self.soc.bind((self.host, self.port))
-        self.soc.listen()
+    def receive(self, conn):
+        return conn.recv(1024).decode("utf-8")
 
-    def sendMessage(self, clientSocket, message):
-        clientSocket.send(message.encode("utf-8"))
-
-    def handleClient(self, clientSocket, clientAddress):
+    def handleConnection(self, conn, addr):
         while True:
-            data = clientSocket.recv(1024).decode("utf-8")
-            if data:
-                print(data) # Display request
-                self.sendMessage(clientSocket, f"SERVER | ACK {data}") # Send response
-            else:
-                break
+            request = self.receive(conn)
+            if request:
+                print(f"RX_SERVER | {request}")
+                self.send(f"{self.average}", conn)
+                print(f"TX_SERVER | {self.average}")
+
 
     def start(self):
-        print("Server started. Waiting for connection..")
         while True:
-            conn, addr = self.soc.accept()
-            print(f"Connected with {addr}")
-            threading.Thread(target = self.handleClient, args=(conn, addr)).start()
+            conn, addr = self.sock.accept()
+            print(f"New connection with: {addr}")
+            threading.Thread(target = self.handleConnection, args = (conn, addr)).start()
 
 
+if len(sys.argv) != 3:
+    print("Error in arguments. python3 Server.py <port> <average>")
+    sys.exit()
+
+print(f"DEBUG len arg: {sys.argv[1]}")
 
 
-server = Server()
+server = Server(sys.argv[1], sys.argv[2])
 server.start()
