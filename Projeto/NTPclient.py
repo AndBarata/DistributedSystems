@@ -4,8 +4,21 @@ import time
 from datetime import datetime, timedelta
 import threading
 import sys
+import RPi.GPIO as GPIO
 
 offsets = [] # For results
+
+#define GPIOs
+ledPin_vermelho = 17
+ledPin_verde = 18
+
+GPIO.setmode(GPIO.BCM)  # BCM scheme
+GPIO.setwarnings(False) #ignore messages in terminal
+
+
+#leds as outputs
+GPIO.setup(ledPin_vermelho,GPIO.OUT)
+GPIO.setup(ledPin_verde,GPIO.OUT)
 
 
 class NTPclient():
@@ -209,11 +222,15 @@ if __name__ == "__main__":
         abs_time = clock_A.getCorrectedTime()
         state = ((int(clock_A.getCorrectedTime().strftime('%S')) // 10) % 2 == 0) ^ int(side)
         if state and not prev_state:
+            GPIO.output(ledPin_verde, GPIO.HIGH)    #turn only green on
+            GPIO.output(ledPin_vermelho, GPIO.LOW)
             print("\Green:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
             monitor.send_data(f"{side} | Green") 
                     
         #state = (int(clock_A.getCorrectedTime().strftime('%S')) // 10) % 2 == 1 and side
-        if not state and prev_state:           
+        if not state and prev_state:   
+            GPIO.output(ledPin_verde, GPIO.LOW)     #turn only red on
+            GPIO.output(ledPin_vermelho, GPIO.HIGH)        
             print("\Red:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
             monitor.send_data(f"{side} | Red") 
 
