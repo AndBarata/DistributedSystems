@@ -1,6 +1,7 @@
 import pandas as pd
 
-file_name = 'log_slots_7-01_V2'
+versao = "V2/"
+file_name = versao + 'slots_no_offset'
 with open(file_name + ".txt", 'r') as file:
     lines = file.readlines()
 

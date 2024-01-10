@@ -11,7 +11,8 @@ offsets = [] # For results
 class NTPclient():
     def __init__(self, start_monotonic, start_datetime):
         # Connection parameters
-        self.host = 'pool.ntp.org' # case of NTP online server
+        #self.host = 'ntp0.ntp-servers.net' # case of NTP online server
+        self.host = 'pool.ntp.org'
         self.port = 123
         self.read_buffer = 1024
         self.address = (self.host, self.port)
@@ -92,7 +93,8 @@ class AbstractClock():
     def __init__(self, NTP_UPDATE_RATE, drift = 0):
 
         # Clock correction parameters
-        self.delay = 0
+        self.last_delay = timedelta(0)
+        self.delay = timedelta(0)
         self.last_offset = 0
         self.offset = 0
         self.rate = 1
@@ -122,6 +124,7 @@ class AbstractClock():
             t1 = ntp_time[2]
             t2 = ntp_time[3]
             t3 = ntp_time[4]
+            
             # Update the rate parameters
             self.last_ntp_timestamp = self.ntp_timestamp
             self.ntp_timestamp = t1
@@ -156,20 +159,26 @@ class AbstractClock():
 
     def updateRate(self, t0, t1, t2, t3):
         self.last_rate = self.rate
-        self.rate = abs((self.timestamp - self.last_timestamp) / (self.ntp_timestamp - self.last_ntp_timestamp).total_seconds())
+        delta_local = self.timestamp - self.last_timestamp
+        delta_ntp = (self.ntp_timestamp - self.last_ntp_timestamp).total_seconds()
+        delta_delay = -(self.delay - self.last_delay).total_seconds()
+        self.rate = (delta_ntp + delta_delay) / delta_local
+        #print(f"DEBUG: delta_local: {delta_local}, {type(delta_local)} | delta_ntp: {delta_ntp}, {type(delta_ntp)} | delta_delay: {delta_delay}, {type(delta_delay)}")
+        #self.rate = abs((self.timestamp - self.last_timestamp) / (self.ntp_timestamp - self.last_ntp_timestamp).total_seconds())
 
     def updateDelay(self, t0, t1, t2, t3):
-        self.delay = (t3-t0) - (t2-t1)
+        self.last_delay = self.delay
+        self.delay = ((t3-t0) - (t2-t1)) / 2
 
     def getCorrectedTime(self):
         now = time.monotonic()
         elapsed_time = now - self.timestamp
-        corrected_time = self.timestamp + elapsed_time*self.rate + self.offset.total_seconds()
+        corrected_time = self.timestamp + elapsed_time #*self.rate + self.offset.total_seconds()
         return self.ntp_client.monotonicToDatetime(corrected_time, self.start_monotonic)
 
 
 class Monitor():
-    def __init__(self, host='172.20.10.4', port=12345):
+    def __init__(self, host='localhost', port=12345):
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
