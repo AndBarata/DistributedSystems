@@ -4,15 +4,28 @@ import time
 from datetime import datetime, timedelta
 import threading
 import sys
+import RPi.GPIO as GPIO
 
 offsets = [] # For results
+
+#define GPIOs
+ledPin_vermelho = 17
+ledPin_verde = 18
+
+GPIO.setmode(GPIO.BCM)  # BCM scheme
+GPIO.setwarnings(False) #ignore messages in terminal
+
+
+#leds as outputs
+GPIO.setup(ledPin_vermelho,GPIO.OUT)
+GPIO.setup(ledPin_verde,GPIO.OUT)
 
 
 class NTPclient():
     def __init__(self, start_monotonic, start_datetime):
         # Connection parameters
-        #self.host = 'ntp0.ntp-servers.net' # case of NTP online server
-        self.host = 'pool.ntp.org'
+        #self.host = 'pool.ntp.org' # case of NTP online server #ntp0.ntp-servers.net
+        self.host = 'ntp0.ntp-servers.net'
         self.port = 123
         self.read_buffer = 1024
         self.address = (self.host, self.port)
@@ -93,13 +106,14 @@ class AbstractClock():
     def __init__(self, NTP_UPDATE_RATE, drift = 0):
 
         # Clock correction parameters
-        self.last_delay = timedelta(0)
         self.delay = timedelta(0)
+        self.last_delay = timedelta(0)
         self.last_offset = 0
         self.offset = 0
         self.rate = 1
         self.last_rate = 1
         self.drift = drift
+        
         
         # Time parameters for rate
         self.start_datetime = datetime.now() # datetime of when the clock was started
@@ -109,6 +123,7 @@ class AbstractClock():
         self.ntp_client = NTPclient(self.start_monotonic, self.start_datetime)
         self.last_ntp_timestamp = self.ntp_client.getServerTime()[2]
         self.ntp_timestamp = self.ntp_client.getServerTime()[3] # datetime of when the NTP server was polled
+
         
 
         # intrinsic clock attributes
@@ -116,6 +131,7 @@ class AbstractClock():
         self.last_timestamp = self.timestamp
         
         self.correctClock()
+        
 
     def correctClock(self):
         ntp_time = self.ntp_client.getServerTime()
@@ -131,9 +147,10 @@ class AbstractClock():
             self.last_timestamp = self.timestamp
             self.timestamp = time.monotonic()
 
+            self.updateDelay(t0, t1, t2, t3)
             self.updateOffset(t0, t1, t2, t3)
             self.updateRate(t0, t1, t2, t3)
-            self.updateDelay(t0, t1, t2, t3)
+            
         
         else:
             print("Error connecting to NTP server. Retrying...")
@@ -159,16 +176,15 @@ class AbstractClock():
 
     def updateRate(self, t0, t1, t2, t3):
         self.last_rate = self.rate
-        delta_local = self.timestamp - self.last_timestamp
         delta_ntp = (self.ntp_timestamp - self.last_ntp_timestamp).total_seconds()
         delta_delay = -(self.delay - self.last_delay).total_seconds()
-        self.rate = (delta_ntp + delta_delay) / delta_local
-        #print(f"DEBUG: delta_local: {delta_local}, {type(delta_local)} | delta_ntp: {delta_ntp}, {type(delta_ntp)} | delta_delay: {delta_delay}, {type(delta_delay)}")
-        #self.rate = abs((self.timestamp - self.last_timestamp) / (self.ntp_timestamp - self.last_ntp_timestamp).total_seconds())
+        delta_local = (self.timestamp - self.last_timestamp)
+        self.rate = abs( (delta_ntp + delta_delay)/(delta_local))
+        #self.rate = abs( ( + (self.last_delay-self.delay).total_seconds())/(self.timestamp - self.last_timestamp))
 
     def updateDelay(self, t0, t1, t2, t3):
         self.last_delay = self.delay
-        self.delay = ((t3-t0) - (t2-t1)) / 2
+        self.delay = ((t3-t0) - (t2-t1))/2 
 
     def getCorrectedTime(self):
         now = time.monotonic()
@@ -178,7 +194,7 @@ class AbstractClock():
 
 
 class Monitor():
-    def __init__(self, host='localhost', port=12345):
+    def __init__(self, host='10.227.156.232', port=12345):
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -218,11 +234,15 @@ if __name__ == "__main__":
         abs_time = clock_A.getCorrectedTime()
         state = ((int(clock_A.getCorrectedTime().strftime('%S')) // 10) % 2 == 0) ^ int(side)
         if state and not prev_state:
+            GPIO.output(ledPin_verde, GPIO.HIGH)    #turn only green on
+            GPIO.output(ledPin_vermelho, GPIO.LOW)
             print("\Green:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
             monitor.send_data(f"{side} | Green") 
                     
         #state = (int(clock_A.getCorrectedTime().strftime('%S')) // 10) % 2 == 1 and side
-        if not state and prev_state:           
+        if not state and prev_state:   
+            GPIO.output(ledPin_verde, GPIO.LOW)     #turn only red on
+            GPIO.output(ledPin_vermelho, GPIO.HIGH)        
             print("\Red:", clock_A.getCorrectedTime(), "\nMonotime: ", time.monotonic())
             monitor.send_data(f"{side} | Red") 
 
