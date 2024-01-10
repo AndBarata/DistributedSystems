@@ -24,7 +24,8 @@ GPIO.setup(ledPin_verde,GPIO.OUT)
 class NTPclient():
     def __init__(self, start_monotonic, start_datetime):
         # Connection parameters
-        self.host = 'pool.ntp.org' # case of NTP online server
+        #self.host = 'pool.ntp.org' # case of NTP online server #ntp0.ntp-servers.net
+        self.host = 'ntp0.ntp-servers.net'
         self.port = 123
         self.read_buffer = 1024
         self.address = (self.host, self.port)
@@ -105,12 +106,14 @@ class AbstractClock():
     def __init__(self, NTP_UPDATE_RATE, drift = 0):
 
         # Clock correction parameters
-        self.delay = 0
+        self.delay = timedelta(0)
+        self.last_delay = timedelta(0)
         self.last_offset = 0
         self.offset = 0
         self.rate = 1
         self.last_rate = 1
         self.drift = drift
+        
         
         # Time parameters for rate
         self.start_datetime = datetime.now() # datetime of when the clock was started
@@ -120,6 +123,7 @@ class AbstractClock():
         self.ntp_client = NTPclient(self.start_monotonic, self.start_datetime)
         self.last_ntp_timestamp = self.ntp_client.getServerTime()[2]
         self.ntp_timestamp = self.ntp_client.getServerTime()[3] # datetime of when the NTP server was polled
+
         
 
         # intrinsic clock attributes
@@ -127,6 +131,7 @@ class AbstractClock():
         self.last_timestamp = self.timestamp
         
         self.correctClock()
+        
 
     def correctClock(self):
         ntp_time = self.ntp_client.getServerTime()
@@ -141,9 +146,10 @@ class AbstractClock():
             self.last_timestamp = self.timestamp
             self.timestamp = time.monotonic()
 
+            self.updateDelay(t0, t1, t2, t3)
             self.updateOffset(t0, t1, t2, t3)
             self.updateRate(t0, t1, t2, t3)
-            self.updateDelay(t0, t1, t2, t3)
+            
         
         else:
             print("Error connecting to NTP server. Retrying...")
@@ -169,10 +175,15 @@ class AbstractClock():
 
     def updateRate(self, t0, t1, t2, t3):
         self.last_rate = self.rate
-        self.rate = abs((self.timestamp - self.last_timestamp) / (self.ntp_timestamp - self.last_ntp_timestamp).total_seconds())
+        delta_ntp = (self.ntp_timestamp - self.last_ntp_timestamp).total_seconds()
+        delta_delay = -(self.delay - self.last_delay).total_seconds()
+        delta_local = (self.timestamp - self.last_timestamp)
+        self.rate = abs( (delta_ntp + delta_delay)/(delta_local))
+        #self.rate = abs( ( + (self.last_delay-self.delay).total_seconds())/(self.timestamp - self.last_timestamp))
 
     def updateDelay(self, t0, t1, t2, t3):
-        self.delay = (t3-t0) - (t2-t1)
+        self.last_delay = self.delay
+        self.delay = ((t3-t0) - (t2-t1))/2 
 
     def getCorrectedTime(self):
         now = time.monotonic()
