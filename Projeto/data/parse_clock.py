@@ -2,7 +2,7 @@ import pandas as pd
 
 # Open the text file and read its contents
 version = "V2/"
-file_name = version + 'clockB_no_offset'
+file_name = version + 'clockA_no_offset'
 with open(file_name + ".txt", 'r') as file:
     lines = file.readlines()
 

@@ -1,7 +1,7 @@
 import pandas as pd
 
 versao = "V2/"
-file_name = versao + 'slots_no_offset'
+file_name = versao + 'slots_corrected'
 with open(file_name + ".txt", 'r') as file:
     lines = file.readlines()
 
