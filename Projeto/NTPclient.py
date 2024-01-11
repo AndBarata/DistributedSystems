@@ -8,6 +8,7 @@ import RPi.GPIO as GPIO
 
 offsets = [] # For results
 
+
 #define GPIOs
 ledPin_vermelho = 17
 ledPin_verde = 18
@@ -113,6 +114,11 @@ class AbstractClock():
         self.rate = 1
         self.last_rate = 1
         self.drift = drift
+
+        file_path = "ntp_values.txt"
+        self.file = open(file_path, "w")
+
+        
         
         
         # Time parameters for rate
@@ -132,7 +138,8 @@ class AbstractClock():
         
         self.correctClock()
         
-
+        
+    
     def correctClock(self):
         ntp_time = self.ntp_client.getServerTime()
         if ntp_time:
@@ -163,6 +170,11 @@ class AbstractClock():
         print(f"rate:{self.rate}")
         print(f"delay:{self.delay}")
         print("\n")
+        self.file.write(f"offset:{self.offset.total_seconds():.5f}\n")
+        self.file.write(f"rate:{self.rate}\n")
+        self.file.write(f"delay:{self.delay}\n")
+        self.file.flush()  # Ensure immediate write to the file
+        
     
     def periodicClockUpdate(self):
         while True:

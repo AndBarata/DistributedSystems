@@ -11,13 +11,16 @@ class Server:
         self.sock.listen(2)
 
     def handle_client(self, client_socket):
-        while True:
-            data = client_socket.recv(1024)
-            if data:
-                print(f"INFO : {data.decode('utf-8')}   \t@ {time.monotonic()}")
-                #print(time.monotonic())
-            else:
-                break
+        filename = "data/V3/slots_no_correction.txt"
+        with open(filename, "a") as file:
+            while True:
+                data = client_socket.recv(1024)
+                if data:
+                    print(f"INFO : {data.decode('utf-8')}   \t@ {time.monotonic()}")
+                    file.write(f"INFO : {data.decode('utf-8')}   \t@ {time.monotonic()}\n")
+                    file.flush()  # Ensure immediate write to the file
+                else:
+                    break
         client_socket.close()
 
     def start(self):
