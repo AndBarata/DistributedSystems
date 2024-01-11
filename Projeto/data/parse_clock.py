@@ -1,8 +1,8 @@
 import pandas as pd
 
 # Open the text file and read its contents
-version = "V2/"
-file_name = version + 'clockA_no_offset'
+version = "V3/"
+file_name = version + 'clockB_no_correction'
 with open(file_name + ".txt", 'r') as file:
     lines = file.readlines()
 
@@ -20,7 +20,7 @@ for i, line in enumerate(lines):
     elif line.find('delay') != -1:
         delays.append(float(line.split(':')[-1]))
 
-    print("DEBUG: ", i)
+    #print("DEBUG: ", i)
 
     #print(f'\nLine {i}: {line}\n{offsets}, {rates}, {delays}')
 

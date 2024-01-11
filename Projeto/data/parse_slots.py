@@ -1,7 +1,7 @@
 import pandas as pd
 
-versao = "V2/"
-file_name = versao + 'slots_corrected'
+versao = "V3/"
+file_name = versao + 'slots_no_correction'
 with open(file_name + ".txt", 'r') as file:
     lines = file.readlines()
 

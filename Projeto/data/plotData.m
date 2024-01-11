@@ -8,7 +8,7 @@ dark_green = 1/255 * [0,100,0];
 dark_blue = 1/255 * [3,37,126];
 dark_red = 1/255 * [139, 0, 0];
 
-version = "V2/";
+version = "V3/";
 
 %% Slots
 
@@ -162,7 +162,16 @@ end
 
 function diff_data = calculate_diff(df_slots)
     slots = df_slots.slots;
+    diff_data = [];
 
-    diff_data = diff(slots);
-    diff_data = diff_data(diff_data < 5);
+    for i = 1:2:length(slots)
+        if i+1 > length(slots)
+            break
+        end
+        diff_data = [diff_data, abs(slots(i+1) - slots(i))];
+    end
+
+
+    %diff_data = diff(slots);
+    %diff_data = diff_data(diff_data < 5);
 end
