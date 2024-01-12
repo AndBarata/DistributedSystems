@@ -1,0 +1,38 @@
+\section{Implementação} \label{sec:implementação}
+    Durante esta secção, irá ser descrito o algoritmo de sincronização e posteriormente a sua implementação em Python. Para além disso, é feita a distinção entre três relógios:
+    
+    \begin{itemize}
+        \item \textbf{Relógio monotónico}:  Relógio intrínseco do hardware. Nunca é corrigido e conta o tempo a partir do qual o sistema operativo foi iniciado.
+        \item \textbf{Relógio NTP}: Relógio do servidor NTP e assumido como correto. Este relógio escraviza o sistema.
+        \item \textbf{Relógio abstrato}: Relógio implementado em software em cima do sistema operativo. É o relógio monotónico corrigido em "rate" e "offset" de acordo com a secção \ref{sec:NTP}.
+    \end{itemize}
+
+    Posto isto, as raspberrypis têm dois relógios: monotónico e abstrato, sendo que este último é utilizado para tomar as decisões de mudança de estado. O monitor apenas utiliza o seu relógio monotónico para marcar os "timestamps" das mudanças de estado de A e B. O servidor NTP responde aos pedido com os "timestamps" do relógio NTP. 
+
+\subsection{Algoritmo}
+    O programa está dividido em dois processos distintos que ocorrem em paralelo: Correção do relógio e Atualizado do Estado. Ambos os algoritmos estão expressos em pseudo-código nas figuras \ref{fig:pseudoCodigoRelogio} e \ref{fig:pseudoCodigoEstado}, respetivamente.
+    
+    
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.6\linewidth]{figures/pseudoCodigoRelogio.png}
+        \caption{Pseudo-código relativo à correção do relógio abstrato}
+        \label{fig:pseudoCodigoRelogio}
+    \end{figure}
+
+    De referir que, o relógio abstrato é o relógio corrigido segundo os parâmetros obtido pelo último pedido NTP (offset, rate e delay), segundo as equações da secção \ref{sec:NTP}. A consulta do relógio abstrato consiste em calcular o tempo que passou desde da última correção NTP de acordo com o relógio monotónico, multiplicar esse tempo pelo rate, somar ao último timestamp desde a atualização e adicionar o offset, equação \ref{eq:corrected_time}.
+
+
+    
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.6\linewidth]{figures/pseudoCodigoEstado.png}
+        \caption{Pseudo-código relativo à atualização do estado}
+        \label{fig:pseudoCodigoEstado}
+    \end{figure}
+
+
+\subsection{Implementação em Python}
+
+\textcolor{red}{\textbf{Breve menção ao código, threads e class e referência ao git}
