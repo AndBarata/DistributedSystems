@@ -2,13 +2,20 @@ clear all
 close all
 clc
 
-
+%% Header
 %color for plots
 dark_green = 1/255 * [0,100,0];
 dark_blue = 1/255 * [3,37,126];
 dark_red = 1/255 * [139, 0, 0];
 
-version = "V3/";
+% Versão indica o host utilizado_ 
+%   - proto: Protótipos
+%   - V1:    Primeiros teste com servidor pool.ntp.rg
+%   - V2:    Testes com servidor pool.ntp.rg
+%   - V3:    Testes com servidor ntp0.ntp-server.net
+%   - V4:    Testes com o servidor a localhost
+
+version = "proto/";
 
 %% Slots
 
@@ -17,7 +24,7 @@ filename = "slots_no_correction.csv";
 
 if isfile(version + filename)
     df = readtable(version + filename);
-    resultsSlots(df, "sem correção")
+    resultsSlots(df, "sem correção", version)
 else
     fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
 end
@@ -28,7 +35,7 @@ filename = "slots_no_offset.csv";
 
 if isfile(version + filename)
     df = readtable(version + filename);
-    resultsSlots(df, "sem correção de Offset")
+    resultsSlots(df, "sem correção de Offset", version)
 else
     fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
 end
@@ -39,18 +46,31 @@ filename = "slots_corrected.csv";
 
 if isfile(version + filename)
     df = readtable(version + filename);
-    resultsSlots(df, "com correção Rate e Offset")
+    resultsSlots(df, "com correção Rate e Offset", version)
 else
     fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
 end
 
+
+% Com correção de Rate e Offset para V2
+filename = "slots_corrected_delay.csv";
+
+if isfile(version + filename)
+    df = readtable(version + filename);
+    resultsSlots(df, "com correção Rate e Offset considerando delay ", version)
+else
+    fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
+end
+
+
+
 %% Clock A
 
 % Sem correção
-filename = "clockA_no_correction.csv";
+filename = "clockA_corrected_delay.csv";
 if isfile(version + filename)
     df = readtable(version + filename);
-    resultsClock(df, "Relógio A, sem correção")
+    resultsClock(df, "Relógio A, sem correção", version)
 
 else
     fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
@@ -60,7 +80,7 @@ end
 filename = "clockA_no_offset.csv";
 if isfile(version + filename)
     df = readtable(version + filename);
-    resultsClock(df, "Relógio A, sem correção de Offset")
+    resultsClock(df, "Relógio A, sem correção de Offset", version)
 
 else
     fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
@@ -71,11 +91,22 @@ end
 filename = "clockA_corrected.csv";
 if isfile(version + filename)
     df = readtable(version + filename);
-    resultsClock(df, "Relógio A, com correção de Rate e Offset")
+    resultsClock(df, "Relógio A, com correção de Rate e Offset", version)
 
 else
     fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
 end
+
+% Com correção de Rate e Offset considerando delay para V2
+filename = "clockA_corrected_delay.csv";
+if isfile(version + filename)
+    df = readtable(version + filename);
+    resultsClock(df, "Relógio A, com correção de Rate e Offset considerando delay ", version)
+
+else
+    fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
+end
+
 
 %% Clock B
 
@@ -83,7 +114,7 @@ end
 filename = "clockB_no_correction.csv";
 if isfile(version + filename)
     df = readtable(version + filename);
-    resultsClock(df, "Relógio B, sem correção")
+    resultsClock(df, "Relógio B, sem correção", version)
 else
     fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
 end
@@ -92,7 +123,7 @@ end
 filename = "clockB_no_offset.csv";
 if isfile(version + filename)
     df = readtable(version + filename);
-    resultsClock(df, "Relógio B, sem correção de Offset")
+    resultsClock(df, "Relógio B, sem correção de Offset", version)
 else
     fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
 end
@@ -102,13 +133,25 @@ end
 filename = "clockB_corrected.csv";
 if isfile(version + filename)
     df = readtable(version + filename);
-    resultsClock(df, "Relógio B, com correção de Rate e Offset")
+    resultsClock(df, "Relógio B, com correção de Rate e Offset", version)
 else
     fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
 end
 
 
-function results = resultsSlots(df, header)
+% Com correção de Rate e Offset considerando delay para V2
+filename = "clockB_corrected_delay.csv";
+if isfile(version + filename)
+    df = readtable(version + filename);
+    resultsClock(df, "Relógio B, com correção de Rate e Offset considerando delay ", version)
+
+else
+    fprintf("\n[Ficheiro não encontrado: %s\n", version + filename + "]")
+end
+
+
+
+function results = resultsSlots(df, header, version)
     dark_green = 1/255 * [0,100,0];
     dark_blue = 1/255 * [3,37,126];
     dark_red = 1/255 * [139, 0, 0];
@@ -119,30 +162,39 @@ function results = resultsSlots(df, header)
     % Plot slots
     x = (1:length(slots)) .* 10 / 60;
     y = slots.*1000;
-    ttl = 'Slots' + header;
+    ttl = 'Slots ' + header;
     figure; plot(x, y, '-', 'color', dark_green); title(ttl); xlabel('Tempo (minutos)'); ylabel('Sincronização das slots (milissegundo)'); xlim([0 length(slots)*10/60]+1)
 
+    % Guardar figura
+    %saveas(gcf, 'Resultados/' + version + "Slots " + header + ".png")
+    %saveas(gcf, 'Resultados/' + version + "Slots " + header + ".fig")
     fprintf("\nResultados da sincronização de slots " + header + ":\n" + ...
             "  - Diferença máxima:\t %f\n" + ...
             "  - Variação máxima: \t %f\n" + ...
             "  - Diferença média: \t %f\n", ...
             max(abs(slots)), max(slots)-min(slots), mean(slots))
+   
 end
 
 
 
-function results = resultsClock(df, header)
+function results = resultsClock(df, header, version)
     dark_green = 1/255 * [0,100,0];
     dark_blue = 1/255 * [3,37,126];
     dark_red = 1/255 * [139, 0, 0];
 
     x = (1:length(df.offset)) .* 5 / 60;
+
+    % Plot offset, rate and delay
     figure;
     plot(x, df.offset, '-', 'color', dark_red); hold on;
     plot(x, df.rate - 1, '-', 'color', dark_green); hold on;
-    plot(x, df.delay, '-', 'color', dark_blue); hold off 
+    plot(x, df.delay, '-', 'color', dark_blue); hold off
     ttl = 'Parâmetros de Correção, ' + header;
     title(ttl); xlabel('Tempo (minutos)'); ylabel('Valor (milisegundos)'); legend('offset', 'rate', 'delay'); xlim([0 length(df.offset)*5/60]+1);
+    % Guardar figura
+    %saveas(gcf, 'Resultados/' + version + "Parâmetros de Correção " + header + ".png")
+    %saveas(gcf, 'Resultados/' + version + "Parâmetros de Correção " + header + ".fig")
 
     fprintf("\nResultados dos parâmetros de correção, " + header + ":\n" + ...
             "  - Offset máximo:   \t %f\n" + ...
@@ -169,9 +221,7 @@ function diff_data = calculate_diff(df_slots)
             break
         end
         diff_data = [diff_data, abs(slots(i+1) - slots(i))];
+
     end
 
-
-    %diff_data = diff(slots);
-    %diff_data = diff_data(diff_data < 5);
 end
