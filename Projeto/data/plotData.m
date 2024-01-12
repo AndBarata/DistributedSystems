@@ -221,7 +221,6 @@ function diff_data = calculate_diff(df_slots)
             break
         end
         diff_data = [diff_data, abs(slots(i+1) - slots(i))];
-
     end
 
 end

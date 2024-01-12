@@ -54,3 +54,20 @@ python3 Monitor.py
 
 
 
+```
+project
+│   README.md
+│   Monitor.py
+│   NTPClient.py 
+│   NTPClientV1.py - old version
+│
+└───data - Results and data from experiences
+│   │   V1/V2/V3/V4/proto - tested servers raw data
+│   │   Resultados - Plots and figures
+│   │
+│   └───relatorio
+│   │   SD_report.pdf - detailed report
+│   │   SD_report_latex - latex report
+│   │ 
+│   └───apresentacao - powerpoint presentation
+```
