@@ -61,7 +61,7 @@ class NTPclient():
         orig_time = time.monotonic()
         
         self.client.sendto(data, self.address)
-        self.client.settimeout(5)  # set a timeout of 5 seconds
+        self.client.settimeout(NTP_UPDATE_RATE/2)  # set a timeout of half the NTP update rate
         
         try:
             
@@ -235,8 +235,8 @@ class Monitor():
 if __name__ == "__main__":
    
 
-    if len(sys.argv) != 5:
-        print("Usage: python3 NTPclient.py <Lado> <NTPRate> <Servidor> <Ciclo do semaforo>")
+    if len(sys.argv) != 4:
+        print("Usage: python3 NTPclient.py <Lado> <NTPRate> <Servidor>")
         sys.exit(-1)
 
 
@@ -244,11 +244,11 @@ if __name__ == "__main__":
         sys.argv[1] = int(sys.argv[1])
         sys.argv[2] = int(sys.argv[2])
         sys.argv[3] = str(sys.argv[3])
-        sys.argv[4] = int(sys.argv[4])
+        
 
 
     except:
-        print("Usage: python3 NTPclient.py <Lado> <NTPRate> <Servidor> <Ciclo do semaforo>")
+        print("Usage: python3 NTPclient.py <Lado> <NTPRate> <Servidor>")
         sys.exit(-1)
 
     
@@ -264,9 +264,7 @@ if __name__ == "__main__":
         print("Servidor needs to be a string.")
         sys.exit(-1)
 
-    if type(sys.argv[4]) != int or sys.argv[4] < 1:
-        print("Ciclo do semaforo needs to be a number equal or bigger than 1.")
-        sys.exit(-1)
+    
 
 
     side = sys.argv[1]
@@ -275,7 +273,7 @@ if __name__ == "__main__":
 
     Servidor_NTP = str(sys.argv[3])
 
-    Ciclo_semaforo = int(sys.argv[4])
+    
 
 
 
@@ -290,7 +288,7 @@ if __name__ == "__main__":
 
     while True:
         abs_time = clock_A.getCorrectedTime()
-        state = ((int(clock_A.getCorrectedTime().strftime('%S')) // Ciclo_semaforo) % 2 == 0) ^ int(side)
+        state = ((int(clock_A.getCorrectedTime().strftime('%S')) // 10) % 2 == 0) ^ int(side)
         if state and not prev_state:
             GPIO.output(ledPin_verde, GPIO.HIGH)    #turn only green on
             GPIO.output(ledPin_vermelho, GPIO.LOW)
