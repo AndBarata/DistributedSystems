@@ -114,6 +114,8 @@ class AbstractClock():
         self.rate = 1
         self.last_rate = 1
         self.drift = drift
+        self.mean_delay = 0
+        self.n_corrections = 0
 
         file_path = "ntp_values.txt"
         self.file = open(file_path, "w")
@@ -141,6 +143,7 @@ class AbstractClock():
         
     
     def correctClock(self):
+        t_local = time.monotonic()
         ntp_time = self.ntp_client.getServerTime()
         if ntp_time:
             t0 = ntp_time[1]
@@ -152,11 +155,17 @@ class AbstractClock():
             self.last_ntp_timestamp = self.ntp_timestamp
             self.ntp_timestamp = t1
             self.last_timestamp = self.timestamp
-            self.timestamp = time.monotonic()
+            self.timestamp = t_local
 
             self.updateDelay(t0, t1, t2, t3)
             self.updateOffset(t0, t1, t2, t3)
+
+            self.mean_delay = (self.mean_delay * self.n_corrections + self.delay.total_seconds())/(self.n_corrections + 1)
+            self.n_corrections += 1
             self.updateRate(t0, t1, t2, t3)
+
+           
+
             
         
         else:
@@ -189,9 +198,9 @@ class AbstractClock():
     def updateRate(self, t0, t1, t2, t3):
         self.last_rate = self.rate
         delta_ntp = (self.ntp_timestamp - self.last_ntp_timestamp).total_seconds()
-        delta_delay = -(self.delay - self.last_delay).total_seconds()
+        delta_delay = (self.delay + self.last_delay).total_seconds()
         delta_local = (self.timestamp - self.last_timestamp)
-        self.rate = abs( (delta_ntp + delta_delay)/(delta_local))
+        self.rate = abs( (delta_ntp - delta_delay + 2*self.mean_delay)/(delta_local))
         #self.rate = abs( ( + (self.last_delay-self.delay).total_seconds())/(self.timestamp - self.last_timestamp))
 
     def updateDelay(self, t0, t1, t2, t3):
@@ -201,7 +210,7 @@ class AbstractClock():
     def getCorrectedTime(self):
         now = time.monotonic()
         elapsed_time = now - self.timestamp
-        corrected_time = self.timestamp + elapsed_time #*self.rate + self.offset.total_seconds()
+        corrected_time = self.timestamp + elapsed_time *self.rate + self.offset.total_seconds()
         return self.ntp_client.monotonicToDatetime(corrected_time, self.start_monotonic)
 
 
