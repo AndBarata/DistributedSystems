@@ -26,7 +26,7 @@ class NTPclient():
     def __init__(self, start_monotonic, start_datetime):
         # Connection parameters
         #self.host = 'pool.ntp.org' # case of NTP online server #ntp0.ntp-servers.net
-        self.host = 'ntp0.ntp-servers.net'
+        self.host = Servidor_NTP
         self.port = 123
         self.read_buffer = 1024
         self.address = (self.host, self.port)
@@ -104,7 +104,7 @@ class NTPclient():
 
 
 class AbstractClock():
-    def __init__(self, NTP_UPDATE_RATE, drift = 0):
+    def __init__(self, NTP_UPDATE_RATE):
 
         # Clock correction parameters
         self.delay = timedelta(0)
@@ -113,11 +113,10 @@ class AbstractClock():
         self.offset = 0
         self.rate = 1
         self.last_rate = 1
-        self.drift = drift
         self.mean_delay = 0
         self.n_corrections = 0
 
-        file_path = "ntp_values.txt"
+        file_path = "clockA_corrected_delay_2NTP.txt"
         self.file = open(file_path, "w")
 
         
@@ -215,7 +214,7 @@ class AbstractClock():
 
 
 class Monitor():
-    def __init__(self, host='10.227.156.232', port=12345):
+    def __init__(self, host='10.227.146.82', port=12345):
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -234,16 +233,41 @@ class Monitor():
 
 
 if __name__ == "__main__":
+   
 
-    # Define update rates
-    NTP_UPDATE_RATE = 5 # seconds -> This can't be to low so that we have time to fetch the NTP time
+    if len(sys.argv) != 5:
+        print("Usage: python3 NTPclient.py <Lado> <NTPRate> <Servidor> <Ciclo do semáforo>")
+        sys.exit(-1)
+   
+    if type(sys.argv[1]) != bool:   
+        print("Lado needs to be 0 or 1.")
+        sys.exit(-1)
 
-    # Adds a drift to the clock if specified, to see the results of the correction
-    side = 1 if len(sys.argv) <= 1 else sys.argv[1]
-    drift = 0 if len(sys.argv) <= 2 else float(sys.argv[2])
+    if type(sys.argv[2]) != int or type(sys.argv[2]) != float or sys.argv[2] < 1:
+        print("NTPRate needs to be a number equal or bigger than 1.")
+        sys.exit(-1)
+    
+    if type(sys.argv[3]) != str:
+        print("Servidor needs to be a string.")
+        sys.exit(-1)
+
+    if type(sys.argv[4]) != int or type(sys.argv[4]) != float or sys.argv[4] < 1:
+        print("Ciclo do semáforo needs to be a number equal or bigger than 1.")
+        sys.exit(-1)
+
+
+    side = sys.argv[1]
+   
+    NTP_UPDATE_RATE = int(sys.argv[2])
+
+    Servidor_NTP = str(sys.argv[3])
+
+    Ciclo_semaforo = int(sys.argv[4])
+
+
 
     # Creates instances for clock and NTP client
-    clock_A = AbstractClock(NTP_UPDATE_RATE, drift)
+    clock_A = AbstractClock(NTP_UPDATE_RATE)
     monitor = Monitor() 
 
     threading.Thread(target=clock_A.periodicClockUpdate).start()
@@ -253,7 +277,7 @@ if __name__ == "__main__":
 
     while True:
         abs_time = clock_A.getCorrectedTime()
-        state = ((int(clock_A.getCorrectedTime().strftime('%S')) // 10) % 2 == 0) ^ int(side)
+        state = ((int(clock_A.getCorrectedTime().strftime('%S')) // Ciclo_semaforo) % 2 == 0) ^ int(side)
         if state and not prev_state:
             GPIO.output(ledPin_verde, GPIO.HIGH)    #turn only green on
             GPIO.output(ledPin_vermelho, GPIO.LOW)

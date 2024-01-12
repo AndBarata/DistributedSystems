@@ -11,7 +11,7 @@ class Server:
         self.sock.listen(2)
 
     def handle_client(self, client_socket):
-        filename = "data/V3/slots_corrected_delay_2NTP.txt"
+        filename = "c:/Sistemas_Distribuidos/Dia_Final/slots_corrected_delay_2NTP.txt"
         with open(filename, "a") as file:
             while True:
                 data = client_socket.recv(1024)
