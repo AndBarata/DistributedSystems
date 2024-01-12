@@ -236,14 +236,27 @@ if __name__ == "__main__":
    
 
     if len(sys.argv) != 5:
-        print("Usage: python3 NTPclient.py <Lado> <NTPRate> <Servidor> <Ciclo do semáforo>")
+        print("Usage: python3 NTPclient.py <Lado> <NTPRate> <Servidor> <Ciclo do semaforo>")
         sys.exit(-1)
-   
-    if type(sys.argv[1]) != bool:   
+
+
+    try:
+        sys.argv[1] = int(sys.argv[1])
+        sys.argv[2] = int(sys.argv[2])
+        sys.argv[3] = str(sys.argv[3])
+        sys.argv[4] = int(sys.argv[4])
+
+
+    except:
+        print("Usage: python3 NTPclient.py <Lado> <NTPRate> <Servidor> <Ciclo do semaforo>")
+        sys.exit(-1)
+
+    
+    if type(sys.argv[1]) != int or sys.argv[1] < 0 or sys.argv[1] > 1:   
         print("Lado needs to be 0 or 1.")
         sys.exit(-1)
 
-    if type(sys.argv[2]) != int or type(sys.argv[2]) != float or sys.argv[2] < 1:
+    if type(sys.argv[2]) != int or sys.argv[2] < 1:
         print("NTPRate needs to be a number equal or bigger than 1.")
         sys.exit(-1)
     
@@ -251,8 +264,8 @@ if __name__ == "__main__":
         print("Servidor needs to be a string.")
         sys.exit(-1)
 
-    if type(sys.argv[4]) != int or type(sys.argv[4]) != float or sys.argv[4] < 1:
-        print("Ciclo do semáforo needs to be a number equal or bigger than 1.")
+    if type(sys.argv[4]) != int or sys.argv[4] < 1:
+        print("Ciclo do semaforo needs to be a number equal or bigger than 1.")
         sys.exit(-1)
 
 
