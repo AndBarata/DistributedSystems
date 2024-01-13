@@ -1,4 +1,4 @@
-# real Semaphore Clock Syncronization
+# Synchronization of traffic lights based on NTP
 
 This project demonstrates the concept of traffic light synchronization using Raspberry Pi 4 devices. Multiple traffic lights, represented by individual Raspberry Pi 4s, are programmed to transition between RED and GREEN states without any direct communication between them. Each traffic light's decision is based solely on its internal timer. The synchronization is ensure by Network Time Protocol - NTP.
 
