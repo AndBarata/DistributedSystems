@@ -1,1 +1,45 @@
 \section{Conclusão} \label{sec_conclusão}
+
+\subsection{Análise dos resultados}
+De acordo com os resultados da tabela \ref{tab:resultados} é possível inferir o seguinte:
+
+\begin{enumerate}
+    \item O servidor mais estável é o S3: devido aos valor baixos do jitter, algo esperado, visto que é um servidor local.
+    \item O experiência que apresentou melhores resultados foi quando não houve correção de relógio.
+    \item A experiências em que o jitter é mais baixo apresentam melhores resultados.
+    \item A variação do período de correção não tem grande influência nos resultados.
+\end{enumerate}
+
+Relativamente ao ponto 2), os relógios das raspberry Pis são bastante parecidos e apresentam drifts muito baixos (cerca de $15ppm$, segundo \cite{b4}). Contudo, um drift de $15ppm$ ao logo de uma hora representa um erro de $36 ms$, e ao longo de uma semana de $6 s$, o que já é critico para um sistema de semáforos. Ora, apesar de os resultados das experiências com sincronização serem piores a curto prazo, este são constantes com o tempo, ou seja, ao longo de uma semana o erro seria sensivelmente o mesmo nos casos com sincronização. 
+
+Os relógios sincronizados apresentam um desempenho inferior a curto prazo, devido ao o ajuste constante do rate, que causa variações que dependem das condições da rede. Por exemplo, na figura \ref{fig:delay_vs_erro} em volta dos $80 minutos$, as condições da rede variam muito o que resulta num aumento do erro quadráticos da precisão das slots. Este efeito é minimizado pela consideração do delay no cálculo do rate. A figura \ref{fig:rate_vs_delay_caso1} apresenta um segmento em que houve uma variação do delay que não foi considerada, o que resulta numa proporcional variação do rate. Enquanto que na figura \ref{fig:rate_vs_delay_caso2} esta variação foi considerada, resultando num rate mais estável. Estas figuras, revelam também a diferença entre as equações \ref{eq:rate_sem_delay} e \ref{eq:rate_com_delay}, respetivamente.
+
+Relativamente ao ponto 3), evidenciam-se que os resultados da experiência com correção de rate no servidor S1 e no servidor S3 com correção de delay, offset e rate. Na verdade, o servidor S1 é bastante instável: para além de apresentar um jitter elevado (1 segundo) tem também uma disponibilidade muito baixa. Ora, nesta experiência o servidor esteve indisponível durante vários minutos, sendo que nos instantes anteriores o delay variou bastante, comprometendo o rate. Assim os relógio utilizaram os últimos parâmetros disponíveis para a sua sincronização, que estavam incorretos, resultando em erros na precisão das slots de $10 s$ em poucos minutos. Em contraste a este resultado, a experiência no servidor 3 com correção de offset, rate e delay teve um jitter de $26 ms$ e um erro na precisão das slots de $8 ms$, o baixo jitter conduziu a baixa variação de rate, que durante toda a experiência apenas variou $0.0088$, o que é muito baixo comparando com a outra experiência nesse servidor que com um jitter de $0.7229$ o rate variou $0.7590$.
+
+No que diz respeito ao ponto 3, como os relógios das raspberry Pi apresentam drifts muito baixos, as correções não precisam de ter um período muito baixo, pelo que os resultados são idênticos para vário períodos de sincronização. Esta conclusão é fundamentada pelo bom desempenho da experiência sem correção.
+
+\subsection{Conclusões finais}
+
+Os resultados deste projeto corroboram a influência do jitter na sincronização de relógio. Para além disso, permitem inferir sobre a melhor metodologia de sincronização. Apesar de os melhores resultados serem com correção de rate, delay e offset, os sistema distribuídos atuais não usam o offset como parâmetro de correção, visto que pode resultar em ajustes negativos o que leva a que o mesmo relógio apresente o mesmo timestamp em dois momentos consecutivos.
+
+Para além disso, uma introdução do delay no cálculo do rate não é uma metodologia usual na sincronização. De facto, sistema atuais utilizam vários valores passados de offset e períodos de atualização segundo o servidor NTP para inferir o rate, enquanto que neste projeto apenas foi utilizado a amostra anterior do período segundo o servidor NTP.
+
+Por fim, o resultado das sincronizações seria mais evidente caso a duração dos teste fosse maior. Deste modo, seriam necessário vários dias de teste para pelos menos duas metodologias: sem sincronização e com sincronização.
+
+\subsection{Contribuições}
+
+O grupo que realizou o projeto é constituído por dois elementos, sendo as contribuições as seguintes:
+
+\begin{outline}
+    \1 André de Azevedo Barata - 50\%
+        \2 Implementação do cliente;
+        \2 Métodos de sincronização;
+        \2 Geração dos resultados;
+        \2 Análise dos resultados;
+   
+    \1 Diogo Vilela - 50\%
+        \2 Métodos de sincronização;
+        \2 Montagem do sistema;
+        \2 Realização das experiências;
+        \2 Análise dos resultados;
+\end{outline}

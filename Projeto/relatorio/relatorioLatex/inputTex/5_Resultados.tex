@@ -1,9 +1,61 @@
 \section{Resultados} \label{sec:resultados}
 
-\textcolor{red}{\textbf{Experiências em table: \\
-    - Correção offset e rate\\
-    - Correção só offset\\
-    - Sem correcção\\
-Resultados: \\
-    - Erro nas slots \\
-    - min, max, variação do rate, delay, offset}}
+    Foram realizadas 6 experiências em 3 servidores diferentes. S1 corresponde ao \url{pool.ntp.org}, S2 a \url{ntp0.ntp-servers.net} e S3 ao \textit{localhost}, que neste caso é o portátil, que faz de ponto de acesso. A experiências realizadas estão presentes na tabela \ref{tab:resultados} cujo os valores a vermelho foram considerados mais relevantes. As experiências realizadas para cada servidor foram as seguintes:
+    
+    \begin{itemize}
+        \item \textbf{Correção rate}: Apenas o rate dos relógio é corrigido.
+        \item \textbf{Correção rate + offset}: Offset corrigido, rate corrigido de acordo com \ref{eq:rate_sem_delay}
+        \item \textbf{Correção rate + offset + delay}: Offset corrigido, rate corrigido de acordo com \ref{eq:rate_com_delay}
+        \item \textbf{Sem correção}: Os relógio A e B não sofrem qualquer sincronização, para além de ajuste inicial do offset.
+        \item \textbf{T=2, T=5, T=15}: Periodicidade da correção por parte do servidor NTP, em segundos.
+    \end{itemize}
+    \input{inputTex/resultsTable}
+
+     
+    As figuras \ref{fig:rate_vs_delay_caso1} e \ref{fig:rate_vs_delay_caso2} ilustram dois segmentos, um em que o delay não é considerado no cálculo do rate e outro em que é. A figura \ref{fig:delay_vs_erro} demonstra a influência do delay na precisão dos slots. Define-se como slot o tempo que um dado semáforo fica num estado, assim, a precisão dos slots é a diferença de tempo entre a mudança de estado do semáforo A e do semáforo B, como indicado a vermelho na figura \ref{fig:explicacaoSlots}. 
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.7\linewidth]{figures/explicacaoSlots.png}
+        \caption{Medição da precisão dos slots}
+        \label{fig:explicacaoSlots}
+    \end{figure}
+
+
+    \begin{figure}[h]
+      \begin{subfigure}{0.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/rate_vs_delay_caso1.png}
+        \caption{Rate sem considerar delay, sinal verde}
+        \label{fig:rate_vs_delay_caso1}
+      \end{subfigure}
+      \begin{subfigure}{0.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/rate_vs_delay_caso2.png}
+        \caption{Rate considerando delay}
+        \label{fig:rate_vs_delay_caso2}
+      \end{subfigure}
+    
+      \caption{Influência da variação do delay no rate, sinal verde}
+    \end{figure}
+    
+    \begin{figure}[h]
+      \begin{subfigure}{0.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/delay.png}
+        \caption{Variação do erro quadrático com o tempo}
+        \label{fig:erroQuadratico}
+      \end{subfigure}
+      \begin{subfigure}{0.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/erro_quadratico_delay.png}
+        \caption{Variação do delay do servidor com o tempo}
+        \label{fig:delay}
+      \end{subfigure}
+      \caption{Influência da variação delay no erro entre slots}
+      \label{fig:delay_vs_erro}
+    \end{figure}
+
+    Por fim, a duração de cada experiência está presente na tabela \ref{tab:horas}, resultando num total de 34 horas e 15 minutos.
+    
+    \input{inputTex/horasTabel}

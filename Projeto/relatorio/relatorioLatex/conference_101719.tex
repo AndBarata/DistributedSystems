@@ -10,52 +10,110 @@
 \usepackage{url}
 \usepackage{hyperref} 
 \usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{colortbl}
+\usepackage{subcaption}
+\usepackage[utf8]{inputenc}
+\usepackage{fourier} 
+\usepackage{array}
+\usepackage{makecell}
+\usepackage{outlines}
+\usepackage{empheq}
+
+\renewcommand\theadalign{bc}
+\renewcommand\theadfont{\bfseries}
+\renewcommand\theadgape{\Gape[4pt]}
+\renewcommand\cellgape{\Gape[4pt]}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{Sincronização de semáforos baseado em NTP\\}
+\title{Sincronização de semáforos baseada em NTP   
 
-\author{\IEEEauthorblockN{1\textsuperscript{st} André de Azevedo Barata}
-\IEEEauthorblockA{
-up201907705@up.pt}
-\and
-\IEEEauthorblockN{2\textsuperscript{nd} Diogo Vilela}
-\IEEEauthorblockA{
-up201907804@up.pt}
-
+    \vspace{0.2cm}   
+    \small \url{https://github.com/AndBarata/DistributedSystems/tree/main/Projeto}
 }
+
+\author{
+    \IEEEauthorblockN{1\textsuperscript{st} André de Azevedo Barata}
+    \IEEEauthorblockA{up201907705@up.pt}
+\and
+    \IEEEauthorblockN{2\textsuperscript{nd} Diogo Vilela}
+    \IEEEauthorblockA{up201907804@up.pt}
+}
+
+
 
 \maketitle
 
+
+
 \begin{abstract}
 
+A sincronização de relógios num sistema distribuído
+é de elevada importância, de modo a manter uma noção explicita
+do tempo ao longo do sistema. Uma grande parte 
+das soluções existentes para o comportamento de semáforos
+baseia-se em soluções de tempo fixo, em que
+a mudança de cor ocorre em ciclos de tempo invariável, sem qualquer
+mecanismo de sincronização com semáforos que funcionam em 
+perpendicular. Assim, este projeto visa explorar a sincronização de 2 semáforos, perpendiculares, numa interseção, cujo objetivo é de fazer a transição da cor de ambos com a maior precisão possível, garantindo a longevidade da sincronização. Para tal utilizou-se o protocolo NTP, para sincronizar os relógios, e desenvolveu-se um algoritmo de ajuste de rate. O sistema é constituído por 2 Raspberry Pi 4, que simulam o comportamento dos semáforos, um monitor, para observar os resultados, um ponto de acesso e um servidor NTP.
+
+Keywords: Sincronização de relógios, NTP, Raspberry Pi 4, semáforos.
+
 \end{abstract}
+
+
 
 
 \input{inputTex/1_intro}
 \input{inputTex/2_NTP}
 \input{inputTex/3_systemArchitecture}
-\input{inputTex/4_Implemetação}
+\input{inputTex/4_Implementation}
 \input{inputTex/5_Resultados}
 \input{inputTex/6_Conclusão}
 
 
 
 
-
-
-
+\renewcommand{\refname}{Referências} % Change "References" to "Referências"
 
 \begin{thebibliography}{00}
-\bibitem{b1} Digi-Key Electronics, https://www.digikey.pt/pt/products/detail/raspberry-pi/SC0194-9/10258781
+\bibitem{b1} Digi-Key Electronics, \url{https://www.digikey.pt/pt/products/detail/raspberry-pi/SC0194-9/10258781}
 
 \bibitem{b2} D.L. Mills. Internet time synchronization: the network time protocol. IEEE Transactions on Communications, 39(10):1482–1493, 1991.
 
+\bibitem{b3} Cisco Press, Time Error > Clocks, Time Error, and Noise, \url{https://www.ciscopress.com/articles/article.asp?p=3128857\&seqNum=2}
 
+\bibitem{b4} SwitchDoc Labs Blog, Benchmarks of Real Time Clocks; Raspberry Pi and Arduino, \url{https://www.switchdoc.com/2016/06/benchmarks-real-time-clocks-raspberry-pi-arduino/}
 
+\bibitem{b5} 
+\href{https://github.com/AndBarata/DistributedSystems/tree/main/Projeto}{GitHub do projeto Semaphore Clock Syncronization}
 \end{thebibliography}
 
 
+\onecolumn % Switch to one-column layout
+
+\renewcommand{\appendixname}{Apêndice} % Change "Appendix" to "Apêndice"
+\appendix
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.55\textwidth]{figures/clientNTP.png}
+    \caption*{Apêndice 1 - Classe em python do cliente NTP}
+\end{figure}
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.55\textwidth]{figures/relogioAbstrato.png}
+    \caption*{Apêndice 2 - Classe em python do relógio abstrato}
+\end{figure}
 \end{document}
+
+
+
+
